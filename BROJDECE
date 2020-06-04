@@ -1,0 +1,63 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.OleDb;
+
+namespace B27B28
+{
+    public partial class BrojDece : Form
+    {
+        public BrojDece()
+        {
+            InitializeComponent();
+        }
+
+        private void BrojDece_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            OleDbConnection con = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0; Data Source=B27B28.accdb");
+            string upit = "Select Roditelj.Ime, Roditelj.Prezime, Adresa, Svojstvo From Roditelj, Dete, Pol, Svojstvo_Roditelja Where Dete.PolID=Pol.PolID And Roditelj.RoditeljID=Dete.RoditeljID And Svojstvo_Roditelja.SvojstvoID=Roditelj.SvojstvoID";
+            if (checkBox1.Checked && checkBox2.Checked && checkBox3.Checked)
+                upit += " And (Roditelj.SvojstvoID=1 Or Roditelj.SvojstvoID=2 OR Roditelj.SvojstvoID=3)";
+
+            else if (checkBox1.Checked && checkBox2.Checked && checkBox3.Checked == false)
+                upit += " And (Roditelj.SvojstvoID=1 Or Roditelj.SvojstvoID=2)";
+
+            else if (checkBox2.Checked && checkBox3.Checked && checkBox1.Checked == false)
+                upit += " And (Roditelj.SvojstvoID=2 Or Roditelj.SvojstvoID=3 )";
+            else if (checkBox3.Checked && checkBox1.Checked && checkBox2.Checked == false)
+                upit += " And (Roditelj.SvojstvoID=3 Or Roditelj.SvojstvoID=1)";
+
+            else if (checkBox1.Checked && checkBox2.Checked == false && checkBox3.Checked == false)
+                upit += " And Roditelj.SvojstvoID=1";
+
+            else if (checkBox2.Checked && checkBox1.Checked == false && checkBox3.Checked == false)
+                upit += " And Roditelj.SvojstvoID=2";
+            else if (checkBox3.Checked && checkBox1.Checked == false && checkBox2.Checked == false)
+                upit += " And Roditelj.SvojstvoID=3";
+
+            if (checkBox4.Checked && checkBox5.Checked)
+                upit += " And (Dete.PolID=1 Or Dete.PolID=2)";
+            else if (checkBox4.Checked && checkBox5.Checked == false)
+                upit += " And Dete.PolID=1";
+            else if (checkBox5.Checked && checkBox4.Checked == false)
+                upit += " And Dete.PolID=2";
+
+            upit += " Group By roditelj.Ime, Roditelj.Prezime, Adresa, Svojstvo Having Count(Dete.RoditeljID)=" + numericUpDown1.Value.ToString();
+            OleDbDataAdapter da = new OleDbDataAdapter(upit, con);
+            DataSet ds = new DataSet();
+            da.Fill(ds);
+            dataGridView1.DataSource = ds.Tables[0];
+        }
+    }
+}
