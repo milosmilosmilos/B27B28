@@ -1,0 +1,286 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.OleDb;
+using System.Runtime.InteropServices;
+
+namespace B27B28
+{
+    public partial class Deca : Form
+    {
+        public Deca()
+        {
+            InitializeComponent();
+        }
+        OleDbConnection con = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0; Data Source=B27B28.accdb");
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            Graphics g = pictureBox1.CreateGraphics();
+
+            Pen p = new Pen(Color.Blue, 2);
+            Pen p1 = new Pen(Color.Red, 2);
+            Pen p2 = new Pen(Color.Green, 2);
+            g.DrawEllipse(p, 50, 50, 50, 50);
+            g.DrawRectangle(p2, 50, 100, 50, 50);
+            Point A = new Point(50, 100);
+            Point B = new Point(20, 50);
+            Point C = new Point(100, 100);
+            Point D = new Point(130, 150);
+            Point E = new Point(60, 150);
+            Point F = new Point(60, 200);
+            Point G = new Point(90, 150);
+            Point H = new Point(90, 200);
+            g.DrawLine(p1, A, B);
+            g.DrawLine(p1, C, D);
+            g.DrawLine(p1, E, F);
+            g.DrawLine(p1, G, H);
+            g.Dispose();
+            button5.Enabled = false;
+        }
+
+        private void Deca_Load(object sender, EventArgs e)
+        {
+            textBox1.Enabled = true;
+            textBox2.Enabled = true;
+            textBox3.Enabled = true;
+            textBox4.Enabled = true;
+            maskedTextBox1.Enabled = true;
+            radioButton1.Enabled = true;
+            radioButton2.Enabled = true;
+            button5.Enabled = true;
+            button3.Enabled = false;
+            button2.Enabled = false;
+            OleDbCommand cmd = new OleDbCommand();
+            cmd.Connection = con;
+            cmd.CommandText = "SELECT * FROM Roditelj";
+            try
+            {
+                con.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    comboBox1.Items.Add(reader["RoditeljID"].ToString() + "-" + reader["Ime"].ToString() + " " + reader["Prezime"].ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                cmd.Dispose();
+                con.Close();
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            textBox1.Enabled = false;
+            textBox2.Enabled = true; textBox2.Clear();
+            textBox3.Enabled = true; textBox3.Clear();
+            textBox4.Enabled = true; textBox4.Clear();
+            maskedTextBox1.Enabled = true; maskedTextBox1.Clear();
+            radioButton1.Enabled = true;
+            radioButton2.Enabled = true;
+            button2.Enabled = true;
+            button3.Enabled = true;
+            OleDbCommand cmd = new OleDbCommand();
+            cmd.Connection = con;
+            cmd.CommandText = "SELECT COUNT(DeteID) AS IZBROJ FROM Dete";
+            try
+            {
+                con.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                reader.Read();
+                int broj = Convert.ToInt32(reader["IZBROJ"]) + 1;
+                textBox1.Text = broj.ToString();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                cmd.Dispose();
+                con.Close();
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            int rid;string s = comboBox1.Text;
+            rid = Convert.ToInt32(s.Substring(0, s.IndexOf('-')));
+            OleDbCommand cmd = new OleDbCommand();
+            cmd.Connection = con; 
+            if (radioButton1.Checked == true)
+                cmd.CommandText = string.Format("INSERT INTO Dete VALUES({0},{1},'{2}','{3}',#{4}#,'{5}',{6})", Convert.ToInt32(textBox1.Text), 1, textBox2.Text, textBox3.Text, maskedTextBox1.Text,textBox4.Text,rid);
+            if (radioButton2.Checked == true)
+                cmd.CommandText = string.Format("INSERT INTO Dete VALUES({0},{1},'{2}','{3}',#{4}#,'{5}',{6})", Convert.ToInt32(textBox1.Text), 2, textBox2.Text, textBox3.Text, maskedTextBox1.Text, textBox4.Text, rid);
+
+            try
+            {
+                con.Open();
+                cmd.ExecuteNonQuery();
+                MessageBox.Show("USPESNO UNESEN RODITELJ");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                cmd.Dispose();
+                con.Close();
+                Deca r = new Deca();
+                r.Show();
+                this.Close();
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            int sifra;
+            radioButton1.Checked = false;
+            radioButton2.Checked = false;
+            if (String.Compare(textBox1.Text, "") == 0) sifra = 0;
+            else sifra = Convert.ToInt32(textBox1.Text);
+            OleDbCommand cmd = new OleDbCommand();
+            cmd.Connection = con;
+            cmd.CommandText = "SELECT * FROM Dete";
+            try
+            {
+                con.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                if (sifra != 0)
+                {
+                    reader.Read();
+                    while (Convert.ToInt32(reader["DeteID"]) < sifra - 1) reader.Read();
+                    textBox1.Text = reader["DeteID"].ToString();
+                    textBox2.Text = reader["Ime"].ToString();
+                    textBox3.Text = reader["Prezime"].ToString();
+                    textBox4.Text = reader["Beleske"].ToString();
+                    int rbr = Convert.ToInt32(reader["RoditeljID"]) - 1;
+                    comboBox1.SelectedItem = comboBox1.Items[rbr];
+                    DateTime d = Convert.ToDateTime(reader["DatumRodjenja"]);
+                    string datum; if (d.Day < 10) datum = "0" + d.Day + "/"; else datum = d.Day + "/";
+                    if (d.Month < 10) datum = datum + "0" + d.Month + "/"; else datum = datum + d.Month + "/";
+                    datum = datum + d.Year;
+                    maskedTextBox1.Text = datum;
+                    int brojka = Convert.ToInt32(reader["PolID"]);
+                    if (brojka == 1) radioButton1.Checked = true;
+                    if (brojka == 2) radioButton2.Checked = true;
+                }
+                else
+                {
+                    reader.Read();
+                    textBox1.Text = reader["DeteID"].ToString();
+                    textBox2.Text = reader["Ime"].ToString();
+                    textBox3.Text = reader["Prezime"].ToString();
+                    textBox4.Text = reader["Beleske"].ToString();
+                    int rbr = Convert.ToInt32(reader["RoditeljID"]) - 1;
+                    comboBox1.SelectedItem = comboBox1.Items[rbr];
+                    DateTime d = Convert.ToDateTime(reader["DatumRodjenja"]);
+                    string datum; if (d.Day < 10) datum = "0" + d.Day + "/"; else datum = d.Day + "/";
+                    if (d.Month < 10) datum = datum + "0" + d.Month + "/"; else datum = datum + d.Month + "/";
+                    datum = datum + d.Year;
+                    maskedTextBox1.Text = datum;
+                    int brojka = Convert.ToInt32(reader["PolID"]);
+                    if (brojka == 1) radioButton1.Checked = true;
+                    if (brojka == 2) radioButton2.Checked = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                cmd.Dispose();
+                con.Close();
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            int sifra;
+            button3.Enabled = true;
+            radioButton1.Checked = false;
+            radioButton2.Checked = false;
+            if (String.Compare(textBox1.Text,"") == 0) sifra = 0;
+            else sifra = Convert.ToInt32(textBox1.Text);
+            OleDbCommand cmd = new OleDbCommand();
+            cmd.Connection = con;
+            cmd.CommandText = "SELECT * FROM Dete";
+            try
+            {
+                con.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                if (sifra == 0)
+                {
+                    while (reader.Read())
+                    {
+                        textBox1.Text = reader["DeteID"].ToString();
+                        textBox2.Text = reader["Ime"].ToString();
+                        textBox3.Text = reader["Prezime"].ToString();
+                        textBox4.Text = reader["Beleske"].ToString();
+                        int rbr = Convert.ToInt32(reader["RoditeljID"]) - 1;
+                        comboBox1.SelectedItem = comboBox1.Items[rbr];
+                        DateTime d = Convert.ToDateTime(reader["DatumRodjenja"]);
+                        string datum; if (d.Day < 10) datum = "0" + d.Day + "/"; else datum = d.Day+"/";
+                        if (d.Month < 10) datum = datum + "0" + d.Month + "/"; else datum = datum + d.Month + "/";
+                        datum = datum + d.Year;
+                        maskedTextBox1.Text =datum;
+                        int brojka = Convert.ToInt32(reader["PolID"]);
+                        if (brojka == 1) radioButton1.Checked = true;
+                        if (brojka == 2) radioButton2.Checked = true;
+                    }
+                }
+                else
+                {
+                    reader.Read();
+                    while (Convert.ToInt32(reader["DeteID"]) < sifra + 1) reader.Read();
+                    textBox1.Text = reader["DeteID"].ToString();
+                    textBox2.Text = reader["Ime"].ToString();
+                    textBox3.Text = reader["Prezime"].ToString();
+                    textBox4.Text = reader["Beleske"].ToString();
+                    int rbr = Convert.ToInt32(reader["RoditeljID"]) - 1;
+                    comboBox1.SelectedItem = comboBox1.Items[rbr];
+                    DateTime d = Convert.ToDateTime(reader["DatumRodjenja"]);
+                    string datum; if (d.Day < 10) datum = "0" + d.Day + "/"; else datum = d.Day + "/";
+                    if (d.Month < 10) datum = datum + "0" + d.Month + "/"; else datum = datum + d.Month + "/";
+                    datum = datum + d.Year;
+                    maskedTextBox1.Text = datum;
+                    int brojka = Convert.ToInt32(reader["PolID"]);
+                    if (brojka == 1) radioButton1.Checked = true;
+                    if (brojka == 2) radioButton2.Checked = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                cmd.Dispose();
+                con.Close();
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+    }
+}
